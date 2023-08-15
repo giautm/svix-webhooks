@@ -19,7 +19,9 @@ mod gcp_pubsub;
 mod rabbitmq;
 mod receiver_output;
 mod redis;
+mod sender_input;
 mod sqs;
+
 pub use self::{
     error::Error, gcp_pubsub::GCPPubSubConsumerPlugin, rabbitmq::RabbitMqConsumerPlugin,
     redis::RedisConsumerPlugin, sqs::SqsConsumerPlugin,
@@ -67,9 +69,9 @@ trait Consumer {
     /// The name of the messaging system, e.g. rabbitmq, sqs, etc.
     fn system(&self) -> &str;
     /// Gets the channel sender for running transformations.
-    fn transformer_tx(&self) -> &Option<TransformerTx>;
+    fn transformer_tx(&self) -> Option<&TransformerTx>;
     /// The js source for the transformation to run on each payload.
-    fn transformation(&self) -> &Option<TransformationConfig>;
+    fn transformation(&self) -> Option<&TransformationConfig>;
     /// The client to use when creating messages in svix.
     fn svix_client(&self) -> &Svix;
 
