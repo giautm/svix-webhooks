@@ -21,7 +21,7 @@ use hyper::{
 };
 use hyper_openssl::HttpsConnector;
 use ipnet::IpNet;
-use openssl::ssl::{SslConnector, SslMethod};
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
 use serde::Serialize;
 use thiserror::Error;
 use tokio::sync::Mutex;
@@ -74,7 +74,18 @@ impl WebhookClient {
 
         // Openssl is required here -- in practice, rustls does not support many
         // ciphers that we encounter on a regular basis:
-        let ssl = SslConnector::builder(SslMethod::tls()).expect("SslConnector build failed");
+        let mut ssl = SslConnector::builder(SslMethod::tls()).expect("SslConnector build failed");
+
+        // Allow dangerous configuration via environment variable
+        if let Ok(value) = std::env::var("SVIX_DANGEROUS_DISABLE_TLS_VERIFICATION") {
+            if value.to_ascii_lowercase() == "true" {
+                tracing::warn!(
+                    "TLS certificate verification has been disabled via an environment variable."
+                );
+                ssl.set_verify(SslVerifyMode::NONE);
+            }
+        }
+
         let https = HttpsConnector::with_connector(NonLocalConnector { connector }, ssl)
             .expect("HttpsConnector build failed");
 
